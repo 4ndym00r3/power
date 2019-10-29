@@ -1,5 +1,10 @@
 /*
- * This file was adapted and simplified from the example isr.c 
+ * 10/09/2019 - Andy Moore
+ * Updated with interrupt 'de-bounce' due to interrupt sometimes
+ * providing two interrupts per flash for the power led on the
+ * meter
+ *
+ * This file was adapted and simplified from the example isr.c
  * distributed with wiringPi by Gordon Henderson
  *
  * It waits for an interrupt on GPIO 1 and prints 'Interrupt' to stdout
@@ -35,10 +40,16 @@
 #include <stdlib.h>
 #include <limits.h>
 #include <wiringPi.h>
-
+#include <time.h>
 void myInterrupt() {
-          printf ("Interrupt\n") ;
-          fflush (stdout) ;
+    printf ("Interrupt\n");
+    fflush (stdout);
+
+    // Debounce the interrupt by waiting for 250ms
+    struct timespec ts;
+    ts.tv_sec = 0;
+    ts.tv_nsec = (250 % 1000) * 1000000;
+    nanosleep(&ts, NULL);
 }
 
 /*
@@ -51,8 +62,8 @@ int main (void)
 {
   wiringPiSetup () ;
 
-  wiringPiISR (1, INT_EDGE_FALLING, &myInterrupt) ;
-  
+  wiringPiISR (4, INT_EDGE_FALLING, &myInterrupt) ;
+
   for (;;) {
         sleep(UINT_MAX);
     }

@@ -1,6 +1,10 @@
 #!/usr/bin/python
 
 """
+	10/09/2019 - Andy Moore
+	Updated Scheduler and EmonCMS URL due to bugs preventing correct operation
+	of the application
+
 	Modified by KieranC to submit pulse count to Open Energy Monitor EmonCMS API
 
 	Power Monitor
@@ -29,17 +33,33 @@
 """
 
 import time, os, subprocess, httplib, datetime
-from apscheduler.scheduler import Scheduler
-
-# The next 2 lines enable logging for the scheduler. Uncomment for debugging.
-#import logging
-#logging.basicConfig()
+from apscheduler.schedulers.background import BackgroundScheduler
 
 pulsecount=0
 power=0
 
+# Every minute this function converts the number of pulses over the last minute into a power value and sends it to EmonCMS
+# @sched.interval_schedule(minutes=1)
+def SendPulses():
+	global pulsecount
+	global power
+#	print ("Pulses: %i") % pulsecount # Uncomment for debugging.
+
+# 	Calculate power value in watts from the number of pulses, power = pulsecount/min * ((3600/meter pulses per kWh)*16.6667W/min)
+	power = pulsecount * 60
+
+#	print ("Power: %iW") % power # Uncomment for debugging.
+	pulsecount = 0
+	timenow = time.strftime('%s')
+
+#	You'll need to put in your API key here from EmonCMS
+        url = ("/input/post?node=<insert node name here>&time=%s&json={power1:%i}&apikey=<insert api key here>") % (timenow, power)
+        connection = httplib.HTTPSConnection("emoncms.org")
+        connection.request("GET", url)
+
 # Start the scheduler
-sched = Scheduler()
+sched = BackgroundScheduler()
+sched.add_job(SendPulses, 'interval', seconds=60)
 sched.start()
 
 
@@ -54,22 +74,5 @@ def runProcess(exe):
       if(retcode is not None):
         break
 
-
-# Every minute this function converts the number of pulses over the last minute into a power value and sends it to EmonCMS
-@sched.interval_schedule(minutes=1)
-def SendPulses():
-	global pulsecount
-	global power
-#	print ("Pulses: %i") % pulsecount # Uncomment for debugging.
-	# The next line calculates a power value in watts from the number of pulses, my meter is 1000 pulses per kWh, you'll need to modify this if yours is different.
-	power = pulsecount * 60
-#	print ("Power: %iW") % power # Uncomment for debugging.
-	pulsecount = 0;
-	timenow = time.strftime('%s')
-        url = ("/emoncms/input/post.json?time=%s&node=1&json={power:%i}&apikey=<insert API key here>") % (timenow, power) # You'll need to put in your API key here from EmonCMS
-        connection = httplib.HTTPConnection("localhost")
-        connection.request("GET", url)
-
-
-for line in runProcess(["/usr/local/bin/gpio-new"]):
+for line in runProcess(["/root/power/gpio-new"]):
     pulsecount += 1
