@@ -5,7 +5,7 @@ Power meter monitoring directly on the Pi using Open Energy Monitor and an LDR.
 
 I've forked this from KieranC's power meter (https://github.com/kieranc/power) which was forked from yfory's power meter: (https://github.com/yfory/power).
 
-He uses a capacitor/resistor for the LDR, whereas KieranC uses a transistor based circuit instead to provide a digital on/off signal which I also used. KieranC also interfaces directly to EmonCMS which provides an easy solution to graph power monitoring and provide cumulative and instananeous power readouts via the EmonCMS UI. You can run this locally on a Raspberry Pi or use the cloud solution which is what I decided to do. You need to pay for a feed, though this is pretty cheap at around £1 per feed per year.
+yfory used a capacitor/resistor for the LDR, whereas KieranC used a transistor based circuit instead to provide a digital on/off signal which I also used. KieranC also interfaces directly to EmonCMS which provides an easy solution to graph power monitoring and provide cumulative and instananeous power readouts via the EmonCMS UI. EmonCMS is an open source energy monitoring solution provided by the OpenEnergyMonitor project (see https://openenergymonitor.org/). You can run EmonCMS locally on a Raspberry Pi or use the cloud solution which is what I decided to do. You need to pay for a feed, though this is pretty cheap at around £1 per feed per year.
 
 # Requirements
 * Raspberry Pi
@@ -16,12 +16,17 @@ He uses a capacitor/resistor for the LDR, whereas KieranC uses a transistor base
 * Relevant Cables/Connectors
 * Modern Electricity Meter
 
-Modern electricity meters have a blinking/flashing LED, often with small text that reads 1000 Imp/kWh. The two important things here are that you have a blinking LED, and that you know the number e.g. 800. Without these, this project will not work for you.
+Modern electricity meters have a blinking/flashing LED, often with small text that reads '1000 Imp/kWh'. The two important things here are that you have a blinking LED on the meter that registers the power usage, and that you know the number of blinks (or Impulses) per kWh (e.g. 800). Without this capability you will not be able to monitor the electricity meter with this project.
 
-This code is set up for 1000 Imp/kWh, the value of 60 on line 65 sets this. 72 should work for 800 Imp/kWh or 30 for 2000 Imp/kWh. To calculate the multiplication factor to convert pulses to Watts use the following equation:
+This code is set up for 1000 Impulses/kWh, the multiplication factor of 60 sets this. 72 should work for 800 Impulses/kWh or 30 for 2000 Impulses/kWh. To calculate the multiplication factor to convert pulses to Watts use the following equation:
 
 ```bash
-power = pulsecount/min * ((3600/meter pulses per kWh)*16.6667W/min)
+multiplication factor (mf) = ((3600/meter pulses per kWh)*16.6667W/min)
+```
+therefore:
+
+```bash
+power = pulsecount/min * mf
 ```
 
 This project uses the LDR as one half of a voltage divider to trigger a transistor which is connected to a GPIO pin on the Pi.
