@@ -1,11 +1,14 @@
 power
 =====
 
-Power meter monitoring directly on the Pi using Open Energy Monitor and an LDR.
+Electricity power meter monitoring directly on the Pi using Open Energy Monitor and an LDR. This code polls your power meter and logs the power usage per minute. This is determined by monitoring the number of impulses or flashes per minute via the impulse indicator on the meter. The power value in Watts is sent to EmonCMS, the open source energy monitoring CMS provided by the Open Energy Monitor project.
 
 I've forked this from KieranC's power meter (https://github.com/kieranc/power) which was forked from yfory's power meter: (https://github.com/yfory/power).
 
-yfory used a capacitor/resistor for the LDR, whereas KieranC used a transistor based circuit instead to provide a digital on/off signal which I also used. KieranC also interfaces directly to EmonCMS which provides an easy solution to graph power monitoring and provide cumulative and instananeous power readouts via the EmonCMS UI. EmonCMS is an open source energy monitoring solution provided by the OpenEnergyMonitor project (see https://openenergymonitor.org/). You can run EmonCMS locally on a Raspberry Pi or use the cloud solution which is what I decided to do. You need to pay for a feed, though this is pretty cheap at around £1 per feed per year.
+Details
+=======
+
+yfory used a capacitor/resistor for the detection LDR, whereas KieranC used a transistor based circuit instead to provide a digital on/off signal which I also used. KieranC also interfaces directly to EmonCMS which provides an easy solution to graph power monitoring and provide cumulative and instananeous power readouts via the EmonCMS UI. EmonCMS is an open source energy monitoring solution provided by the OpenEnergyMonitor project (see https://openenergymonitor.org/). You can run EmonCMS locally on a Raspberry Pi or use the cloud solution which is what I decided to do. You need to pay for a feed, though this is pretty cheap at around £1 per feed per year.
 
 # Requirements
 * Raspberry Pi
@@ -61,7 +64,7 @@ sudo chmod a+x /etc/init.d/power-monitor
 sudo update-rc.d power-monitor defaults
 ```
 
-**Note:** Be sure to check the power-monitor file to make sure that the path to the Python application, monitor.py, matches with the path on your system. For example, /home/pi/power/power.py
+**Note:** Be sure to check the power-monitor file to make sure that the path to the Python application, monitor.py, matches with the path on your system. For example, /root/power/power.py
 
 Due to Python's inability to respond to an interrupt, I've used a very simple C app to listen for an interrupt triggered when the LDR detects a pulse. Monitor.py counts these pulses and each minute, creates a power reading in watts which it sends to EmonCMS' API.
 This file was adapted and simplified from the example isr.c distributed with wiringPi by Gordon Henderson
